@@ -115,3 +115,113 @@ sudo systemctl restart vsftpd
 * Los archivos a subir deben existir en el directorio donde se ejecute clienteftp (o usar rutas completas).
 * Los archivos descargados se guardan en el directorio actual con el mismo nombre del archivo remoto.
 
+## Ejemplo de ejecución
+
+Compilación (opción 1: Makefile):
+```bash
+make
+# o manual:
+gcc GarcesB-clienteFTP.c connectTCP.c connectsock.c errexit.c passiveTCP.c -o clienteftp -lpthread
+```
+
+Ejecución básica:
+```bash
+./clienteftp localhost 21
+Conectado al servidor localhost en el puerto 21
+Servidor: 220 (vsFTPd 3.0.3)
+Bienvenido al servicio FTP
+Ingrese el nombre de usuario: ubuntu
+Servidor: 331 Please specify the password.
+Ingrese la contrasena: ********
+Servidor: 230 Login successful.
+==== Menu FTP ====
+1. PWD ...
+Seleccione una opcion: 1
+Servidor: 257 "/home/ubuntu/ftp" is the current directory
+```
+
+Listar archivos (opción 2):
+```bash
+Seleccione una opcion: 2
+Servidor: 227 Entering Passive Mode (127,0,0,1,195,44)
+Dirección PASV detectada: 127.0.0.1:50004
+Conexion PASV establecida correctamente
+Servidor: 150 Here comes the directory listing.
+---- Contenido del directorio remoto ----
+test.txt
+readme.txt
+img.png
+---- Fin del listado ----
+Servidor: 226 Directory send OK.
+```
+
+Subir archivo (opción 4 - STOR pasivo):
+```bash
+Seleccione una opcion: 4
+Ingrese el nombre del archivo a subir: test.txt
+Servidor: 227 Entering Passive Mode (...)
+Subiendo archivo...
+Servidor: 150 Ok to send data.
+Servidor: 226 Transfer complete.
+Archivo 'test.txt' subido correctamente.
+```
+
+Descargar archivo (opción 3 - RETR pasivo):
+```bash
+Seleccione una opcion: 3
+Ingrese el nombre del archivo a descargar: readme.txt
+Servidor: 227 Entering Passive Mode (...)
+Servidor: 150 Opening BINARY mode data connection.
+Servidor: 226 Transfer complete.
+Archivo readme.txt descargado correctamente.
+```
+
+Subida concurrente (opción 7):
+```bash
+Seleccione una opcion: 7
+Coloque la cantida de archivos que se desea enviar a la vez: 2
+Nombre del archivo 1: a.txt
+Nombre del archivo 2: b.txt
+Hilo a.txt subiendo archivo...
+Hilo b.txt subiendo archivo...
+Hilo a.txt Envio completado
+Hilo b.txt Envio completado
+Todos los hilos han terminado
+```
+
+Descarga concurrente (opción 8):
+```bash
+Seleccione una opcion: 8
+Coloque la cantidad de archivos que se desea descargar a la vez: 2
+Nombre del archivo remoto 1: readme.txt
+Nombre del archivo remoto 2: test.txt
+Hilo readme.txt descargando el archivo ...
+Hilo test.txt descargando el archivo ...
+Hilo readme.txt ha completado la descarga
+Hilo test.txt ha completado la descarga
+Todas las descargas han terminado.
+```
+
+Modo activo (PORT + STOR) (opción 11):
+```bash
+Seleccione una opcion: 11
+Ingrese el nombre del archivo a subir (modo activo): big.bin
+Enviando comando: PORT 127,0,0,1,31,144
+Servidor: 200 PORT command successful.
+Subiendo archivo 'big.bin' en modo activo...
+Servidor: 150 Ok to send data.
+Servidor: 226 Transfer complete.
+Archivo 'big.bin' subido correctamente (modo activo).
+```
+
+Salir (opción 5):
+```bash
+Seleccione una opcion: 5
+Servidor: 221 Goodbye.
+```
+
+Notas:
+* Los códigos 150 y 226 indican transferencia iniciada y finalizada correctamente.
+* En concurrencia cada hilo establece su propia sesión (USER/PASS).
+* Asegurar que los archivos locales existan antes de STOR.
+
